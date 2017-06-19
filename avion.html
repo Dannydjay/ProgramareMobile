@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:1px solid #d3d3d3;
+    background-color: #73daf0;
+}
+</style>
+</head>
+<body>
+<script>
+//variabile joc directie
+var alpha,beta,gamma;
+var joc;
+var obstacoluri = [];
+var bum=false;
+//creare imagine cu avion
+var avion=new Image();
+var avionFoc=new Image();
+avion.src="avion.png";
+avionFoc.src="avion_foc.png";
+function incepeJoc() {
+      window.addEventListener("deviceorientation", on_device_orientation);
+    joc = new component(30, 30, "red", 10, 120,"poza");
+    desenareCanvas.pornire();
+     
+}
+//se deseneaza canvas 
+var desenareCanvas = {
+    canvas : document.createElement("canvas"),
+    pornire : function() {
+        
+        this.canvas.width = 480;
+        this.canvas.height = 270;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
+        this.interval = setInterval(actualizareJoc, 20);
+        },
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    stop : function() {
+        clearInterval(this.interval);
+    }
+}
+//componentele functiei canvas
+function component(width, height, color, x, y,valoare) {
+    this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;    
+    this.x = x;
+    this.y = y;   
+    
+    this.update = function() {
+          ctx = desenareCanvas.context;
+        if(valoare=="poza"){
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.drawImage(avion, -(avion.width/2), -(avion.height/2));  
+            ctx.restore();
+        }
+		if(bum==true)	{
+		  ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.drawImage(avionFoc, -(avionFoc.width/2), -(avion.height/2));  
+            ctx.restore();
+			bum=false;
+		}
+        else{
+        
+      
+        ctx.fillStyle = color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+    }
+    this.newPos = function() {
+        this.x += this.speedX;
+        this.y += this.speedY;        
+    }  
+
+//in cazul in care exista coliziuni	
+    this.crashWith = function(otherobj) {
+        var myleft = this.x;
+        var myright = this.x + (this.width);
+        var mytop = this.y;
+        var mybottom = this.y + (this.height);
+        var otherleft = otherobj.x;
+        var otherright = otherobj.x + (otherobj.width);
+        var othertop = otherobj.y;
+        var otherbottom = otherobj.y + (otherobj.height);
+        var crash = true;
+        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+            crash = false;
+        }
+        return crash;
+    }
+}
+//se actualiseaza la fiecare secunda (deseneaza)
+function actualizareJoc() {
+    var x, height, obstacol, minimDistanta, maximDistanta, obstacol1, obstacol2;
+    for (i = 0; i < obstacoluri.length; i += 1) {
+        if (joc.crashWith(obstacoluri[i])) {
+		bum=true;
+		alert("bum");
+            desenareCanvas.stop();
+            return;
+        } 
+    }
+    desenareCanvas.clear();
+    desenareCanvas.frameNo += 1;
+    if (desenareCanvas.frameNo == 1 || contorInterval(150)) {
+        x = desenareCanvas.canvas.width;
+        minimDistanta = 20;
+        maximDistanta = 200;
+        height = Math.floor(Math.random()*(maximDistanta-minimDistanta+1)+minimDistanta);
+        obstacol1 = 50;
+        obstacol2 = 200;
+        obstacol = Math.floor(Math.random()*(obstacol2-obstacol1+1)+obstacol1);
+        obstacoluri.push(new component(10, height, "red", x, 0));
+        obstacoluri.push(new component(10, x - height - obstacol, "red", x, height + obstacol));
+    }
+    for (i = 0; i < obstacoluri.length; i += 1) {
+        obstacoluri[i].x += -1;
+        obstacoluri[i].update();
+    }
+    joc.newPos();    
+    joc.update();
+}
+
+function contorInterval(n) {
+    if ((desenareCanvas.frameNo / n) % 1 == 0) {return true;}
+    return false;
+}
+
+
+
+function on_device_orientation(evt){
+	 alpha=evt.alpha;
+	 beta=evt.beta;
+	 gamma=evt.gamma;
+    
+    joc.speedY =(beta/2);
+    joc.speedX=(gamma/2);
+    
+    }
+
+
+</script>
+<button type="button" onClick="incepeJoc();">Porneste joc</button>
+</body>
+</html>
